@@ -1,0 +1,123 @@
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <cstdio>
+#include <cstdlib>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <cstring>
+#include <sys/types.h>
+#include <dirent.h>
+#include <vector>
+#include <algorithm>
+#include <sstream>
+
+using namespace std;
+
+// システムモニター機能
+void system_monitor() {
+    int meminfo = 0;
+    int diskinfo = 0;
+
+    FILE *fp = fopen("/proc/meminfo", "r");
+    fscanf(fp, "%d", &meminfo);
+    fclose(fp);
+
+    ifstream in("/proc/diskstats");
+
+    if (in.is_open()) {
+        string line;
+        while (getline(in, line)) {
+            if (line.find("sda") != string::npos) {
+                istringstream iss(line);
+                int dummy;
+                for (int i = 0; i < 11; ++i) {
+                    iss >> dummy;
+                }
+                iss >> diskinfo;
+                break;
+            }
+        }
+        in.close();
+    }
+
+    cout << "Memory Info: " << meminfo << endl;
+    cout << "Disk Info: " << diskinfo << endl;
+}
+
+// CPUの使用率取得関数
+float get_cpu_usage() {
+    // ここにLinuxでのCPU使用率取得コードを追加する
+    return 0.0; // 仮の値を返す
+}
+
+// ファイルのリスト表示コマンド
+void list_files(string directory) {
+    DIR* dir;
+    struct dirent* ent;
+    if ((dir = opendir(directory.c_str())) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            // "." と ".." を除外
+            if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+                cout << ent->d_name << endl;
+            }
+        }
+        closedir(dir);
+    } else {
+        cerr << "Error opening directory." << endl;
+    }
+}
+
+// ヘルプコマンド
+void show_help() {
+    ifstream file("help.txt");
+    if (file.is_open()) {
+        string line;
+        while (getline(file, line)) {
+            cout << line << endl;
+        }
+        file.close();
+    } else {
+        cerr << "Error opening help file." << endl;
+    }
+}
+
+// ファイルの情報取得コマンド
+void get_file_info(string filename) {
+    struct stat info;
+    if (stat(filename.c_str(), &info) == 0) {
+        cout << "File Size: " << info.st_size << " bytes" << endl;
+        cout << "Creation Time: " << ctime(&info.st_ctime) << endl;
+    } else {
+        cerr << "Error getting file info." << endl;
+    }
+}
+
+int main() {
+    while (true) {
+        cout << "=== Menu ===" << endl;
+        cout << "1. System Monitor" << endl;
+        cout << "2. Show Clock" << endl;
+        cout << "3. Text Editor" << endl;
+        cout << "4. List Files in Directory" << endl;
+        cout << "5. Help" << endl;
+        cout << "6. Get File Info" << endl;
+        cout << "7. Exit" << endl;
+        cout << "Enter your choice: ";
+
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+            case 1:
+                system_monitor();
+                break;
+                
+            // 他のメニューケースもここに追加する
+
+            case 7:
+                return 0; // プログラムを終了する
+        }
+    }
+    return 0;
+}
